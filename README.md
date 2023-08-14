@@ -13,3 +13,5 @@ Em caso de erro no update migration:
 "ConnectionStrings": {
     "DefaultConnection": "Data Source=SEU-COMPUTADOR-NOME\\SQLEXPRESS;Initial Catalog=MyHospitalDB;Integrated Security=True;TrustServerCertificate=True"
 },
+
+#Definir como projeto de inicialização HospitalCrud..

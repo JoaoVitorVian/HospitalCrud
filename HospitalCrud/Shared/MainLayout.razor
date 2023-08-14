@@ -1,0 +1,22 @@
+﻿@inherits LayoutComponentBase
+<CascadingAuthenticationState>
+<div class="main">
+    <div class="navbar">
+        <div>
+           <a href="/registro" class="btn btn-primary">Página Inicial</a>
+        </div>
+          <button class="btn btn-primary" @onclick="() => NavigateToLogin()">Login</button>
+    </div>
+    <div class="content">
+        @Body
+    </div>
+</div>
+</CascadingAuthenticationState>
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; }
+
+    private void NavigateToLogin()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

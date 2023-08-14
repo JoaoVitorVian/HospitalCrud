@@ -1,0 +1,43 @@
+﻿@page "/fotouploader"
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="OpenFileDialog">Selecionar Imagem</button>
+    <Tewr.Blazor.FileReader.InputFile id="fileInput" OnChange="HandleFileSelected" style="display: none;" />
+</div>
+
+<div class="text-center mt-3">
+    @if (!string.IsNullOrEmpty(Base64Image))
+    {
+        <img src="@($"data:image/png;base64,{Base64Image}")" alt="Foto" style="max-width: 200px; max-height: 200px;" />
+    }
+</div>
+
+@code {
+    private string Base64Image { get; set; }
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.GetMultipleFiles().FirstOrDefault();
+        if (file != null)
+        {
+            using var memoryStream = new MemoryStream();
+            await file.OpenReadStream().CopyToAsync(memoryStream);
+
+            Base64Image = Convert.ToBase64String(new ReadOnlySpan<byte>(memoryStream.ToArray()));
+        }
+    }
+
+    private async Task OpenFileDialog()
+    {
+        var file = await JSRuntime.InvokeAsync<IJSObjectReference>("openFileDialog");
+        if (file != null)
+        {
+            var buffer = await file.InvokeAsync<byte[]>("arrayBuffer");
+            Base64Image = Convert.ToBase64String(buffer);
+            StateHasChanged();
+        }
+    }
+}

@@ -1,0 +1,146 @@
+﻿@page "/medicos/fichasmedicas/{id:int?}"
+@attribute [Authorize(Roles = "MEDICO")]
+@using HospitalCrud.Entity;
+@using HospitalCrud.Service;
+@using System.ComponentModel.DataAnnotations;
+@using Microsoft.AspNetCore.Authorization;
+@using HospitalCrud.Service.interfaces;
+
+@inject IPacienteService PacienteService
+@inject NavigationManager NavigationManager
+
+@if (Id == null)
+{
+    <h3>Criar Nova Ficha Médica</h3>
+}
+else
+{
+    <h3>Editar Ficha Médica</h3>
+}
+
+<EditForm Model="@ficha" OnValidSubmit="SalvarFicha">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="nomeCompleto">Nome Completo</label>
+        <InputText id="nomeCompleto" class="form-control" @bind-Value="ficha.NomeCompleto"/>
+        <ValidationMessage For="@(() => ficha.NomeCompleto)" />
+    </div>
+
+    <div class="form-group">
+        <label for="cpf">CPF</label>
+        <input id="cpf" class="form-control" @bind="ficha.CPF" />
+        <ValidationMessage For="@(() => ficha.CPF)" />
+    </div>
+
+    <div class="form-group">
+        <label for="numeroCelular">Número de Celular</label>
+        <input id="numeroCelular" class="form-control" @bind="ficha.NumeroCelular"/>
+        <ValidationMessage For="@(() => ficha.NumeroCelular)" />
+    </div>
+
+    <div class="form-group">
+        <label for="endereco">Endereço</label>
+        <InputText id="endereco" class="form-control" @bind-Value="ficha.Endereco" />
+        <ValidationMessage For="@(() => ficha.Endereco)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">@botaoTexto</button>
+    @if (Id != null)
+    {
+        <button type="button" class="btn btn-danger" @onclick="DeletarFicha">Excluir Ficha</button>
+    }
+
+    <button class="btn btn-primary" @onclick="IrParaRegistro">Voltar</button>
+</EditForm>
+<p>
+    <button class ="btn btn-primary" onclick="document.getElementById('flpicker').click()">Selecionar Imagem</button>
+</p>
+<InputFile id="flpicker" OnChange="@OnInputFileChange" hidden multiple />
+<p>*fotos de até 32kb.*</p>
+<div class="text-center mt-3">
+    @if (!string.IsNullOrEmpty(ficha.FotoBase64))
+    {
+        <img src="@($"data:image/png;base64,{ficha.FotoBase64}")" alt="Imagem Selecionada" style="max-width:1000px; max-height: 1000px;" />
+    }
+</div>
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private string botaoTexto = string.Empty;
+    private Paciente ficha = new Paciente();
+    private int fileSize;
+    private string Base64Image { get; set; }
+
+    protected override void OnInitialized()
+    {
+        botaoTexto = Id == null ? "Salvar Nova Ficha" : "Atualizar Ficha";
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id != null)
+        {
+            ficha = await PacienteService.ObterFichaPorId((int)Id);
+        }
+    }
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles(e.FileCount))
+        {
+            if (file.ContentType == "image/png")
+            {
+                using var memoryStream = new MemoryStream();
+                await file.OpenReadStream().CopyToAsync(memoryStream);
+                var imageBytes = memoryStream.ToArray();
+                ficha.FotoBase64 = Convert.ToBase64String(imageBytes);
+
+                fileSize = imageBytes.Length;
+            }
+        }
+    }
+
+    private async Task SalvarFicha()
+    {
+        if (Id == null)
+        {
+            if (IsValidForm())
+            {
+                await PacienteService.CriarFichaPaciente(ficha, ficha.FotoBase64);
+                NavigationManager.NavigateTo("/registro");
+            }
+        }
+        else
+        {
+            if (IsValidForm())
+            {
+                await PacienteService.AtualizarFichaPaciente(ficha, ficha.FotoBase64);
+                NavigationManager.NavigateTo("/registro");
+            }
+        }
+    }
+
+    private bool IsValidForm()
+    {
+        var context = new ValidationContext(ficha, serviceProvider: null, items: null);
+        var results = new List<ValidationResult>();
+
+        return Validator.TryValidateObject(ficha, context, results, true);
+    }
+
+
+    private async Task DeletarFicha()
+    {
+        await PacienteService.DeletarFichaPaciente(ficha.Id);
+        NavigationManager.NavigateTo("/registro");
+    }
+
+    private void IrParaRegistro()
+    {
+        NavigationManager.NavigateTo("/registro");
+    }
+    
+}

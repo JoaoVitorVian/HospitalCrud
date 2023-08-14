@@ -1,0 +1,74 @@
+﻿@page "/registro"
+@attribute [Authorize(Roles = "medico,paciente")]
+@using HospitalCrud.Entity;
+@using HospitalCrud.Service;
+@using Microsoft.AspNetCore.Authorization;
+@using HospitalCrud.Service.interfaces;
+
+@inject IPacienteService PacienteService
+@inject NavigationManager NavigationManager
+
+<h3>Fichas Médicas</h3>
+
+    <button class="btn btn-primary" @onclick="CriarNovaFicha">Criar Nova Ficha</button>
+
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>Nome Completo</th>
+            <th>CPF</th>
+            <th>Número de Celular</th>
+            <th>Endereço</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var paciente in pacientes)
+        {
+            <tr>
+                <td>@paciente.NomeCompleto</td>
+                <td>@paciente.CPF</td>
+                <td>@paciente.NumeroCelular</td>
+                <td>@paciente.Endereco</td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-primary" @onclick="(() => EditarFicha(paciente.Id))">Editar</button>
+                        <button class="btn btn-danger" @onclick="(() => DeletarFicha(paciente.Id))">Excluir</button>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+
+@code {
+    List<Paciente> pacientes = new List<Paciente>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarFichas();
+    }
+
+    private async Task CarregarFichas()
+    {
+        pacientes = await PacienteService.ListarFichasPacientes();
+    }
+
+    private void CriarNovaFicha()
+    {
+        NavigationManager.NavigateTo("medicos/fichasmedicas");
+    }
+
+    private void EditarFicha(int id)
+    {
+        NavigationManager.NavigateTo($"medicos/fichasmedicas/{id}");
+    }
+
+    private async Task DeletarFicha(int id)
+    {
+        await PacienteService.DeletarFichaPaciente(id);
+        await CarregarFichas();
+    }
+}

@@ -1,0 +1,73 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using System.Security.Claims;
+@using HospitalCrud.Service.interfaces;
+@inject NavigationManager NavigationManager
+@inject IAuthService AuthService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h3 class="text-center">Login</h3>
+
+            <EditForm Model="loginModel" OnValidSubmit="Authenticate">
+
+    <div class="form-group">
+        <label for="Email">Email</label>
+        <InputText id="Email" class="form-control" @bind-Value="loginModel.Email" />
+        <ValidationMessage For="@(() => loginModel.Email)"/>
+    </div>
+
+    <div class="form-group">
+        <label for="Senha">Senha</label>
+        <InputText id="Senha" type="password" class="form-control" @bind-Value="loginModel.Senha" />
+        <ValidationMessage For="@(() => loginModel.Senha)"/>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Entrar</button>
+     </EditForm>
+        </div>
+    </div>
+</div>
+
+@if (showSignInError)
+{
+    <div class="alert alert-danger mt-3">
+        Email ou senha inválidos.
+    </div>
+}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+               <button class="btn btn-primary" @onclick="IrParaRegistro">Registrar</button>
+        </div>
+    </div>
+</div>
+@code {
+    private UsuarioLogin loginModel = new UsuarioLogin();
+    private ClaimsPrincipal user;
+    private bool showSignInError = false;
+
+    private async Task Authenticate()
+    {
+        user = await AuthService.AuthenticateAsync(loginModel.Email, loginModel.Senha);
+
+        if (user != null)
+        {
+            NavigationManager.NavigateTo("/registro");
+        }
+        else
+        {
+            showSignInError = true;
+        }
+    }
+
+
+    private void IrParaRegistro()
+    {
+       NavigationManager.NavigateTo("/registrar");
+    }
+}

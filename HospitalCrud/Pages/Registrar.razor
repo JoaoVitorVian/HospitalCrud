@@ -1,0 +1,94 @@
+﻿@page "/registrar"
+@using HospitalCrud.Service.interfaces;
+@using Microsoft.AspNetCore.Components.Forms
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<div class="container mt-4">
+   <div class="row justify-content-center">
+     <div class="col-md-6">
+        <h3 class="text-center">Registro</h3>
+         <EditForm Model="registroModel" OnValidSubmit="RealizarRegistro">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="Email">Email</label>
+        <InputText id="Email" class="form-control" @bind-Value="registroModel.Email" />
+                    <ValidationMessage For="@(() => registroModel.Email)" />
+    </div>
+
+    <div class="form-group">
+        <label for="Senha">Senha</label>
+        <InputText id="Senha" type="password" class="form-control" @bind-Value="registroModel.Senha" />
+           @if (!ValidatePassword(registroModel.Senha))
+           {
+             <p class="text-danger">A senha deve conter pelo menos um caractere não alfanumérico, um dígito e uma letra maiúscula.</p>
+           }
+
+    </div>
+
+    <div class="form-group">
+        <label for="SenhaConfirmacao">Confirmar Senha</label>
+        <InputText id="SenhaConfirmacao" type="password" class="form-control" @bind-Value="registroModel.SenhaConfirmacao" />
+                    <ValidationMessage For="@(() => registroModel.SenhaConfirmacao)" />
+
+    </div>
+
+    <div class="form-group">
+        <label for="Role">Role</label>
+        <InputText id="Role" class="form-control" @bind-Value="registroModel.Role" />
+                    @if (!ValidateRole(registroModel.Role))
+                    {
+                        <p class="text-danger">Essa role não existe(medico ou paciente).</p>
+                    }
+    </div>
+
+    <button type="submit" class="btn btn-primary">Registrar</button>
+   </EditForm>
+            <button class="btn btn-primary" @onclick="IrParaLogin">Voltar para o Login</button>
+       </div>
+    </div>
+</div>
+@code {
+    private UsuarioRegistro registroModel = new UsuarioRegistro();
+
+    private async Task RealizarRegistro()
+    {
+        if (!ValidateRole(registroModel.Role))
+        {
+            return;
+        }
+        if (!ValidatePassword(registroModel.Senha))
+        {
+            return;
+        }
+
+
+        var result = await AuthService.RealizarRegistro(registroModel.Email, registroModel.Senha, registroModel.Role);
+        if (result.Succeeded)
+        {
+            NavigationManager.NavigateTo("/registro");
+        }
+    }
+
+    private bool ValidatePassword(string password)
+    {
+        bool hasNonAlphanumeric = !string.IsNullOrWhiteSpace(password) && password.Any(char.IsLetterOrDigit);
+        bool hasDigit = !string.IsNullOrWhiteSpace(password) && password.Any(char.IsDigit);
+        bool hasUppercase = !string.IsNullOrWhiteSpace(password) && password.Any(char.IsUpper);
+
+        return hasNonAlphanumeric && hasDigit && hasUppercase;
+    }
+
+    private bool ValidateRole(string role)
+    {
+        string lowerCaseRole = role?.ToLower();
+        return lowerCaseRole == "medico" || lowerCaseRole == "paciente";
+    }
+
+    private void IrParaLogin()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}
